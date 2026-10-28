@@ -249,6 +249,45 @@ details.ex>summary b{font-size:16px;line-height:1.25}
   .wrap.anim>*:nth-child(2){animation-delay:.04s}.wrap.anim>*:nth-child(3){animation-delay:.08s}.wrap.anim>*:nth-child(4){animation-delay:.12s}
   @keyframes rise{from{transform:translateY(6px)}to{transform:none}}
 }
+
+/* Courses */
+.seg.seg3{grid-template-columns:repeat(3,1fr)}
+.store{font:800 13px/1 var(--display);font-stretch:108%;letter-spacing:.02em;text-transform:uppercase;padding:14px 0 2px;color:var(--ink)}
+.rayon{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);padding:12px 0 2px}
+.rayon+.srow,.rayon+.xrow .srow{border-top:0}
+.sn2 small b{color:var(--ink);font-weight:700}
+.had{font-size:13px;color:var(--muted);padding-top:10px;border-top:1px dashed var(--line);margin-top:4px}
+details.trip{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
+details.trip>summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 16px;cursor:pointer}
+details.trip>summary::-webkit-details-marker{display:none}
+.th{display:flex;flex-direction:column;gap:3px;min-width:0}
+.th .eyebrow{color:var(--accent)}
+.th h3{font:800 20px/1.05 var(--display);font-stretch:110%;letter-spacing:-.01em}
+.th small{font-size:13px;color:var(--muted)}
+.tr{text-align:right;display:flex;flex-direction:column;gap:3px;flex:none}
+.tr b{font:800 16px/1 var(--display);font-stretch:105%;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tr small{font-size:12px;color:var(--muted);font-weight:600}
+details.trip.full .tr small{color:var(--ok)}
+details.trip.past{opacity:.6}
+.tb{padding:0 16px 14px;display:flex;flex-direction:column}
+.bar.tp{background:var(--surface-2);margin-bottom:2px}
+.bar.tp i{background:var(--ok)}
+.chipset{display:flex;flex-wrap:wrap;gap:8px}
+.tgl{border:1px solid var(--line);background:var(--surface-2);border-radius:99px;padding:8px 14px;font-weight:600;font-size:14px;min-height:40px}
+.tgl.on{background:var(--btn);color:var(--on-btn);border-color:var(--btn)}
+.sw{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:12px 0 2px}
+.sw span{display:flex;flex-direction:column;gap:2px;min-width:0}
+.sw small{font-size:13px;color:var(--muted)}
+.sw i{flex:none;width:46px;height:28px;border-radius:99px;background:var(--surface-2);border:1px solid var(--line);position:relative;transition:background .15s}
+.sw i::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--muted);transition:transform .15s,background .15s}
+.sw[aria-pressed="true"] i{background:var(--ok);border-color:var(--ok)}
+.sw[aria-pressed="true"] i::after{transform:translateX(18px);background:#fff}
+.xrow{display:flex;align-items:center;gap:6px}
+.xrow .srow{flex:1;min-width:0}
+.xdel{flex:none;width:36px;height:36px;border-radius:10px;border:0;background:var(--surface-2);color:var(--muted);font-size:20px;line-height:1}
+.xadd{display:flex;gap:8px;padding-top:10px}
+.xadd input{flex:1;min-width:0;min-height:46px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2);padding:8px 12px;font-size:16px}
+.xadd .btn{flex:none}
 @media (max-width:380px){.kc .num{font-size:44px}.ring,.ring svg{width:84px;height:84px}.tg{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
@@ -353,7 +392,7 @@ function best(X,src){
   const L=X.price.local,A=X.price.auchan;
   if(src==='local')return {price:L,where:'local'};
   if(src==='auchan')return {price:A,where:'auchan'};
-  if(L!=null&&A!=null)return L<=A?{price:L,where:'local'}:{price:A,where:'auchan'};
+  if(L!=null&&A!=null)return A<=L*.8?{price:A,where:'auchan'}:{price:L,where:'local'};
   return L!=null?{price:L,where:'local'}:{price:A,where:'auchan'};
 }
 function cost(items,src){let t=0;for(const [id,g] of items){const X=FOODS[id];t+=g*X.raw/1000*best(X,src).price;}return t;}
@@ -401,27 +440,103 @@ function genDay(P,di,over){
   const sum=k=>meals.reduce((a,m)=>a+m[k],0);
   return {T,meals,k:sum('k'),p:sum('p'),c:sum('c'),f:sum('f'),cost:total};
 }
-function qtyOf(X,g){
-  if(X.unit){const n=Math.max(1,Math.ceil(g/X.unit.g-.01));return {txt:n+' '+(n>1?X.unit.pl:X.unit.n),buy:n*X.unit.g};}
-  const buy=g>=1000?Math.ceil(g/100)*100:Math.ceil(g/50)*50;
-  const u=X.liquid?['L','ml']:['kg','g'];
-  return {txt:buy>=1000?fr(buy/1000,1)+' '+u[0]:buy+' '+u[1],buy};
+/* ---------- Courses : moteur ----------
+   Idées reprises des grandes apps : quantités en vrais conditionnements (Mealime), placard « j'en ai déjà » (Mealime),
+   sorties planifiées pour le frais et liste qui reste en place jusqu'à la fin de la période (AnyList), ajouts libres (Bring!).
+   PACK : g = poids d'un conditionnement entier (boîte, brique, baguette…), step = vente au poids par pas de x grammes.
+   price = prix fixe d'un conditionnement au marché (sinon prix au kg × poids). */
+const PACK={
+ riz:{step:500}, pates:{g:500,n:'paquet de 500 g',pl:'paquets de 500 g'}, pain:{g:190,n:'baguette',pl:'baguettes',price:150},
+ mil:{step:250}, patate:{step:500}, avoine:{g:500,n:'boîte de 500 g',pl:'boîtes de 500 g'},
+ niebe:{step:250}, lentille:{g:500,n:'paquet de 500 g',pl:'paquets de 500 g'},
+ oeuf:{g:55,n:'œuf',pl:'œufs'}, poulet:{step:500}, boeuf:{step:250}, poisson:{step:500},
+ sardine:{g:125,n:'boîte',pl:'boîtes'}, thon:{g:160,n:'boîte',pl:'boîtes'},
+ arachide:{step:250}, pate:{step:250}, lait:{g:1000,n:'brique de 1 L',pl:'briques de 1 L'},
+ laitpoudre:{g:400,n:'sachet de 400 g',pl:'sachets de 400 g'}, caille:{g:500,n:'sachet de 500 g',pl:'sachets de 500 g'},
+ grec:{g:500,n:'pot de 500 g',pl:'pots de 500 g'}, banane:{g:150,n:'banane',pl:'bananes'},
+ legumes:{step:250}, huile:{g:1000,n:'bouteille de 1 L',pl:'bouteilles de 1 L'}, sucre:{step:500}
+};
+/* Durée de conservation : 2 = à racheter tous les 2 jours, 4 = tous les 4 jours, absent = stock pour toute la période. */
+const FRESH={poisson:2,boeuf:2,poulet:2,legumes:4,banane:4,caille:4,grec:4};
+const MEAT=['poisson','boeuf','poulet'];
+const PANTRY=['huile','sucre','laitpoudre','pate','avoine','riz','pates'];
+const RAYON=['Féculents','Légumineuses','Viandes, poissons, œufs','Produits laitiers','Fruits & légumes','Épicerie'];
+const STORE_N={local:'Marché et boutique',auchan:'Auchan'};
+const fromIso=s=>{const a=s.split('-');return new Date(+a[0],+a[1]-1,+a[2]);};
+const addDays=(s,k)=>{const d=fromIso(s);d.setDate(d.getDate()+k);return iso(d);};
+const DSH=['lun.','mar.','mer.','jeu.','ven.','sam.','dim.'];
+const nth=n=>n===1?'1er':String(n);
+const shortDate=s=>{const d=fromIso(s);return DSH[wd(d)]+' '+nth(d.getDate());};
+function dayName(s){
+  const t=iso(new Date());
+  if(s===t)return 'Aujourd’hui';
+  if(s===addDays(t,1))return 'Demain';
+  const d=fromIso(s);return DAYS[wd(d)]+' '+nth(d.getDate())+' '+MOIS[d.getMonth()];
 }
-function shopping(P,over,days){
-  const acc={};
-  for(const di of days){
-    const d=genDay(P,di,over);
-    for(const m of d.meals)for(const [id,g] of m.items){
-      const X=FOODS[id],b=best(X,P.src);
-      const a=acc[id]=acc[id]||{id,g:0,where:b.where,price:b.price};
-      a.g+=g*X.raw;
+/* Magasin : le marché d'abord ; Auchan seulement si l'article n'est pas au marché ou s'il y est au moins 20 % moins cher. */
+function storeFor(X,src){
+  const L=X.price.local,A=X.price.auchan;
+  if(src==='local'||A==null)return 'local';
+  if(src==='auchan'||L==null)return 'auchan';
+  return A<=L*.8?'auchan':'local';
+}
+function buyOf(id,need,where){
+  const X=FOODS[id],pk=PACK[id]||{step:250},kg=X.price[where];
+  if(pk.g){
+    const n=Math.max(1,Math.ceil(need/pk.g-.02)),bought=n*pk.g;
+    let txt=n+' '+(n>1?pk.pl:pk.n);
+    if(id==='oeuf'&&n>=30)txt+=` (${n%30?'environ ':''}${fr(n/30,n%30?1:0)} plateau${n>=60?'x':''})`;
+    const c=pk.price&&where==='local'?n*pk.price:bought/1000*kg;
+    return {txt,cost:Math.round(c/25)*25,left:bought-need};
+  }
+  const st=pk.step,buy=Math.max(st,Math.ceil(need/st-.02)*st);
+  return {txt:buy>=1000?fr(buy/1000,buy%1000?1:0)+' kg':buy+' g',cost:Math.round(buy/1000*kg/25)*25,left:buy-need};
+}
+const nDaysOf=sc=>sc==='day'?1:sc==='3'?3:7;
+/* La liste reste la même du premier au dernier jour de la période ; une nouvelle liste démarre ensuite d'elle-même. */
+function shopAnchor(){
+  const t=iso(new Date()),n=nDaysOf(S.sc);
+  let sh=S.shop;
+  if(!sh||sh.n!==n||sh.start>t||addDays(sh.start,n-1)<t){sh=S.shop={start:t,n};save();}
+  return sh;
+}
+function shopPlan(P){
+  const sh=shopAnchor(),n=sh.n,src=P.src,fz=!!S.freezer;
+  const days=[];
+  for(let k=0;k<n;k++){
+    const date=addDays(sh.start,k),d=genDay(P,wd(fromIso(date)),S.over),need={},uses={};
+    d.meals.forEach(m=>m.items.forEach(([id,g])=>{need[id]=(need[id]||0)+g*FOODS[id].raw;(uses[id]=uses[id]||new Set()).add(m.n);}));
+    days.push({date,need,uses});
+  }
+  const life=id=>(fz&&MEAT.includes(id))?0:(FRESH[id]||0);
+  const trips=[];
+  for(let k=0;k<n;k+=2){
+    const acc={};
+    const add=(id,kk)=>{const a=acc[id]=acc[id]||{id,need:0,uses:new Set()};a.need+=days[kk].need[id];days[kk].uses[id].forEach(u=>a.uses.add(u));};
+    for(let kk=0;kk<n;kk++)for(const id in days[kk].need){
+      if(id==='pain'&&n>1)continue;
+      const L=life(id);
+      if(L===0){if(k===0)add(id,kk);}
+      else if(k%L===0&&kk>=k&&kk<k+L)add(id,kk);
+    }
+    const items=[],had=[];
+    Object.values(acc).forEach(a=>{
+      const X=FOODS[a.id],where=storeFor(X,src),b=buyOf(a.id,a.need,where);
+      const it={id:a.id,name:X.b||X.n,cat:X.cat,where,qty:b.txt,cost:b.cost,left:b.left,meals:a.uses.size,pantry:PANTRY.includes(a.id)};
+      (it.pantry&&S.have[a.id]?had:items).push(it);
+    });
+    items.sort((x,y)=>(x.where===y.where?0:x.where==='local'?-1:1)||RAYON.indexOf(x.cat)-RAYON.indexOf(y.cat)||x.name.localeCompare(y.name,'fr'));
+    if(items.length||had.length){
+      const end=addDays(sh.start,Math.min(n-1,k+(k===0?n:2)-1));
+      trips.push({k,date:addDays(sh.start,k),big:k===0&&n>1,items,had,end,lastFresh:addDays(sh.start,Math.min(n-1,k+1))});
     }
   }
-  return Object.values(acc).map(a=>{
-    const X=FOODS[a.id],q=qtyOf(X,a.g);
-    return {id:a.id,name:X.b||X.n,cat:X.cat,where:a.where,qty:q.txt,cost:Math.round(q.buy/1000*a.price/25)*25};
-  }).sort((x,y)=>CATS.indexOf(x.cat)-CATS.indexOf(y.cat)||x.name.localeCompare(y.name,'fr'));
+  /* Pain : acheté frais chaque matin, compté en baguettes jour par jour. */
+  const bread=n>1?days.filter(d=>d.need.pain).map(d=>{const b=buyOf('pain',d.need.pain,storeFor(FOODS.pain,src));return {date:d.date,qty:b.txt,cost:b.cost};}):[];
+  const pantryIds=[...new Set(days.flatMap(d=>Object.keys(d.need)).filter(id=>PANTRY.includes(id)))];
+  return {sh,n,trips,bread,pantryIds};
 }
+const isBought=k=>!!S.bought[k];
 
 /* Séances */
 const E=(n,m,s,r,rest,t,o)=>Object.assign({n,m,s,r,rest,t,kg:true},o||{});
@@ -595,13 +710,12 @@ const figHTML=name=>'<svg class="fig" viewBox="0 0 120 90" data-a="'+name+'" rol
 /* ---------- État ---------- */
 const LS='mber-muscu-v1';
 const DEF=()=>({v:1,t:0,p:{sex:'h',age:20,h:175,w:65,level:'deb',days:4,equip:'gym',act:1,surplus:400,budget:3500,src:'both',sample:true},
-  eaten:{},over:{},sess:{},logs:{},weights:[],bought:{},bw:'',sc:'week'});
+  eaten:{},over:{},sess:{},logs:{},weights:[],bought:{},sc:'week',have:{},freezer:false,shop:null,extra:[]});
 const norm=o=>{const D=DEF();o=o||{};const r=Object.assign(D,o);r.p=Object.assign(DEF().p,o.p||{});return r;};
 let S;
 try{S=norm(JSON.parse(localStorage.getItem(LS)||'null'));}catch(e){S=DEF();}
 S.tab='today';S.day=wd(new Date());
 const wk0=iso(mondayOf(new Date()));
-if(S.bw!==wk0){S.bought={};S.bw=wk0;}
 
 function prune(){
   const lim=iso(new Date(Date.now()-90*864e5)),lim2=iso(new Date(Date.now()-35*864e5));
@@ -609,6 +723,8 @@ function prune(){
   Object.keys(S.eaten).forEach(k=>{if(k<lim2)delete S.eaten[k];});
   Object.keys(S.logs).forEach(k=>{if(S.logs[k].length>12)S.logs[k]=S.logs[k].slice(-12);});
   if(S.weights.length>300)S.weights=S.weights.slice(-300);
+  const lim3=iso(new Date(Date.now()-21*864e5)),xs=new Set((S.extra||[]).map(x=>'x|'+x.id));
+  Object.keys(S.bought).forEach(k=>{const d=k.split('|')[0];if(!k.includes('|')||(d!=='x'&&d<lim3)||(d==='x'&&!xs.has(k)))delete S.bought[k];});
 }
 const clean=()=>{const c=Object.assign({},S);delete c.tab;delete c.day;return c;};
 let cloud=null,ct=null,busy=false,dirty=false;
@@ -637,7 +753,6 @@ async function initCloud(){
       if(d&&d.s&&d.t>(S.t||0)){
         const tab=S.tab,day=S.day;
         S=norm(JSON.parse(d.s));S.tab=tab;S.day=day;
-        if(S.bw!==wk0){S.bought={};S.bw=wk0;}
         try{localStorage.setItem(LS,JSON.stringify(clean()));}catch(e){}
         render();return;
       }
@@ -754,27 +869,101 @@ function viewMeals(){
   return o;
 }
 
-/* ---------- Courses ---------- */
-let shopText='';
-function viewShop(){
-  const P=S.p,wholeWeek=S.sc==='week',days=wholeWeek?[0,1,2,3,4,5,6]:[wd(new Date())];
-  const list=shopping(P,S.over,days),g={local:[],auchan:[]};
-  list.forEach(x=>g[x.where].push(x));
-  const tot=list.reduce((a,x)=>a+x.cost,0),bud=P.budget*days.length;
-  const names={local:'Marché ou boutique du quartier',auchan:'Auchan'};
-  let o=`<div class="seg" role="group" aria-label="Période"><button class="${wholeWeek?'':'on'}" data-act="sc" data-v="day">Aujourd’hui</button><button class="${wholeWeek?'on':''}" data-act="sc" data-v="week">7 jours</button></div>`;
-  o+=`<div class="pills"><span class="pill ${tot<=bud?'ok':'warn'}">Total estimé ${money(tot)}</span><span class="pill">Budget ${money(bud)}</span></div>`;
-  shopText='Courses Mbër Muscu ('+(wholeWeek?'7 jours':'aujourd’hui')+')\n';
-  ['local','auchan'].forEach(w=>{
-    if(!g[w].length)return;
-    const sub=g[w].reduce((a,x)=>a+x.cost,0);
-    shopText+='\n'+names[w]+' :\n'+g[w].map(x=>'- '+x.name+' : '+x.qty+' (~'+money(x.cost)+')').join('\n')+'\n';
-    o+=`<section class="card"><div class="gh"><h3>${names[w]}</h3><b>${money(sub)}</b></div><div class="shop">${g[w].map(x=>`<button class="srow${S.bought[x.id]?' on':''}" data-act="bought" data-id="${x.id}" aria-pressed="${!!S.bought[x.id]}"><span class="box"></span><span class="sn2">${x.name}<small>${x.qty}</small></span><span class="sp">${money(x.cost)}</span></button>`).join('')}</div></section>`;
+/* ---------- Courses : écran ---------- */
+const CART_IC='<path d="M3 4h2.2l2 11h10.2l2-7.5H6.4"/><circle cx="9" cy="19.2" r="1.3"/><circle cx="17" cy="19.2" r="1.3"/>';
+function tripTitle(t,P){
+  if(t.big)return 'Grande course';
+  return 'Frais';
+}
+function tripSub(t,pl){
+  if(pl.n===1)return 'Tout pour la journée';
+  if(t.big)return `Stock pour ${pl.n} jours, frais jusqu’à ${shortDate(t.lastFresh)}`;
+  return t.lastFresh===t.date?`Frais pour ${shortDate(t.date)}`:`Frais pour ${shortDate(t.date)} et ${shortDate(t.lastFresh)}`;
+}
+function tripStats(t){
+  const keys=t.items.map(x=>t.date+'|'+x.id);
+  const done=keys.filter(isBought).length;
+  const left=t.items.filter(x=>!isBought(t.date+'|'+x.id)).reduce((a,x)=>a+x.cost,0);
+  const tot=t.items.reduce((a,x)=>a+x.cost,0);
+  return {done,all:keys.length,left,tot};
+}
+function itemRow(t,x){
+  const k=t.date+'|'+x.id,on=isBought(k);
+  const left=x.pantry&&x.left>=100?` · il en restera ≈ ${x.left>=1000?fr(x.left/1000,1)+' kg':Math.round(x.left/50)*50+' g'}`:'';
+  return `<button class="srow${on?' on':''}" data-act="bought" data-k="${k}" aria-pressed="${on}"><span class="box"></span><span class="sn2">${x.name}<small><b>${x.qty}</b> · ${x.meals>1?x.meals+' repas':'1 repas'}${left}</small></span><span class="sp">${money(x.cost)}</span></button>`;
+}
+function tripBody(t){
+  let o='',lastW='',lastC='';
+  const stores=new Set(t.items.map(x=>x.where));
+  t.items.forEach(x=>{
+    if(stores.size>1&&x.where!==lastW){o+=`<div class="store">${STORE_N[x.where]}</div>`;lastW=x.where;lastC='';}
+    if(x.cat!==lastC){o+=`<div class="rayon">${x.cat}</div>`;lastC=x.cat;}
+    o+=itemRow(t,x);
   });
-  shopText+='\nTotal estimé : '+money(tot);
-  o+='<button class="btn wide" data-act="copy">Copier la liste (WhatsApp)</button><div id="cpbox"></div>';
-  o+='<p class="small muted">Prix estimés à Dakar. Ils changent selon le marché, la saison et ton quartier : ajuste avec ce que tu paies vraiment.</p>';
+  if(t.had.length)o+=`<p class="had">Déjà à la maison : ${t.had.map(x=>x.name).join(', ')}</p>`;
   return o;
+}
+function extrasBlock(){
+  const ex=S.extra||[];
+  return `<div class="rayon">Mes ajouts</div>${ex.map(x=>{const k='x|'+x.id,on=isBought(k);return `<div class="xrow"><button class="srow${on?' on':''}" data-act="bought" data-k="${k}" aria-pressed="${on}"><span class="box"></span><span class="sn2">${x.t}</span></button><button class="xdel" data-act="xdel" data-id="${x.id}" aria-label="Retirer ${x.t}">×</button></div>`;}).join('')}
+  <form class="xadd" data-form="xadd"><input id="xin" type="text" maxlength="60" placeholder="Ajouter : piment, sel, savon…" aria-label="Ajouter un article" autocomplete="off"><button class="btn ghost" type="submit">Ajouter</button></form>`;
+}
+function viewShop(){
+  const P=S.p,pl=shopPlan(P),today=iso(new Date());
+  const all=pl.trips.flatMap(t=>t.items.map(x=>({k:t.date+'|'+x.id,c:x.cost})))
+    .concat(pl.bread.map(b=>({k:b.date+'|pain',c:b.cost})));
+  const tot=all.reduce((a,x)=>a+x.c,0),done=all.filter(x=>isBought(x.k)),spent=done.reduce((a,x)=>a+x.c,0);
+  const bud=P.budget*pl.n,pc=all.length?done.length/all.length:0;
+  const pan=pl.trips.reduce((a,t)=>a+t.items.filter(x=>x.pantry&&x.left>=100).reduce((b,x)=>b+x.cost,0),0);
+  const end=addDays(pl.sh.start,pl.n-1);
+  const nTrips=pl.trips.length+(pl.bread.length?0:0);
+  let o=`<div class="seg seg3" role="group" aria-label="Durée de la liste">${[['day','Aujourd’hui'],['3','3 jours'],['week','7 jours']].map(v=>`<button class="${S.sc===v[0]?'on':''}" data-act="sc" data-v="${v[0]}" aria-pressed="${S.sc===v[0]}">${v[1]}</button>`).join('')}</div>`;
+  o+=`<section class="hero"><div class="hero-top"><div><div class="eyebrow">${pl.n===1?'Liste du jour':`Du ${shortDate(pl.sh.start)} au ${shortDate(end)}`}</div><div class="kc"><span class="num">${fr(tot)}</span><span class="of">FCFA</span></div><div class="left">${tot<=bud?`Dans le budget de <b>${money(bud)}</b>`:`<b>${money(tot-bud)}</b> au-dessus du budget de ${money(bud)}${pan?`, dont ${money(pan)} de placard qui durera plus longtemps`:''}`}</div></div><div class="ring">${ringSVG(pc,40,10)}<span>${done.length}/${all.length}</span></div></div>
+    <div class="foot"><span>Déjà payé <b>${money(spent)}</b></span><span>Reste <b>${money(tot-spent)}</b></span><span><b>${nTrips}</b> sortie${nTrips>1?'s':''}${pl.bread.length?' + pain':''}</span></div></section>`;
+  /* Placard */
+  if(pl.pantryIds.length){
+    o+=`<section class="card"><div class="gh"><h3>Déjà à la maison ?</h3></div><p class="small muted">Touche ce que tu as encore : on le retire de la liste et du total.</p><div class="chipset">${pl.pantryIds.map(id=>{const on=!!S.have[id];return `<button class="tgl${on?' on':''}" data-act="have" data-id="${id}" aria-pressed="${on}">${on?'✓ ':''}${FOODS[id].b||FOODS[id].n}</button>`;}).join('')}</div>
+    <button class="sw" data-act="freezer" aria-pressed="${!!S.freezer}"><span><b>J’ai un congélateur</b><small>Viande et poisson achetés en une fois avec la grande course</small></span><i></i></button></section>`;
+  }
+  /* Sorties */
+  let firstOpen=true;
+  pl.trips.forEach((t,i)=>{
+    const st=tripStats(t),past=t.date<today,cur=!past&&firstOpen;
+    if(cur)firstOpen=false;
+    const full=st.all>0&&st.done===st.all;
+    o+=`<details class="trip${past?' past':''}${full?' full':''}"${(cur||(!past&&!full&&i<2))?' open':''}><summary><div class="th"><span class="eyebrow">${dayName(t.date)}</span><h3>${tripTitle(t,P)}</h3><small>${tripSub(t,pl)}</small></div><div class="tr"><b>${money(st.tot)}</b><small>${full?'Fait':st.done+'/'+st.all+' pris'}</small></div></summary>
+      <div class="tb"><div class="bar tp"><i style="width:${st.all?Math.round(st.done/st.all*100):0}%"></i></div>${tripBody(t)}${cur?extrasBlock():''}<button class="link" data-act="copy" data-trip="${i}">Copier cette sortie pour WhatsApp</button></div></details>`;
+  });
+  if(firstOpen)o+=`<section class="card">${extrasBlock()}</section>`;
+  /* Pain */
+  if(pl.bread.length){
+    const bt=pl.bread.reduce((a,b)=>a+b.cost,0);
+    o+=`<section class="card"><div class="gh"><h3>Pain, chaque matin</h3><b>${money(bt)}</b></div><p class="small muted">Acheté frais à la boutique le jour même.</p><div class="shop">${pl.bread.map(b=>{const k=b.date+'|pain',on=isBought(k);return `<button class="srow${on?' on':''}" data-act="bought" data-k="${k}" aria-pressed="${on}"><span class="box"></span><span class="sn2">${dayName(b.date)}<small>${b.qty}</small></span><span class="sp">${money(b.cost)}</span></button>`;}).join('')}</div></section>`;
+  }
+  o+='<button class="btn wide" data-act="copy" data-trip="all"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>Copier ce qui reste à acheter</button><div id="cpbox"></div>';
+  o+='<p class="small muted">Prix estimés à Dakar, en conditionnements entiers : ce qui reste (huile, sucre, lait en poudre) te sert les semaines suivantes. Les prix changent selon le marché et la saison.</p>';
+  return o;
+}
+function shopCopy(which){
+  const P=S.p,pl=shopPlan(P);
+  const list=which==='all'?pl.trips:[pl.trips[+which]].filter(Boolean);
+  let t=`*Courses Mbër Muscu*`+(pl.n>1?` (${shortDate(pl.sh.start)} → ${shortDate(addDays(pl.sh.start,pl.n-1))})`:'')+'\n';
+  let tot=0;
+  list.forEach(tr=>{
+    const rest=tr.items.filter(x=>!isBought(tr.date+'|'+x.id));
+    if(!rest.length)return;
+    t+=`\n*${dayName(tr.date)} · ${tripTitle(tr,P)}*\n`;
+    let w='';
+    rest.forEach(x=>{if(x.where!==w){t+=`_${STORE_N[x.where]}_\n`;w=x.where;}t+=`• ${x.name} : ${x.qty}\n`;tot+=x.cost;});
+  });
+  if(which==='all'){
+    const br=pl.bread.filter(b=>!isBought(b.date+'|pain'));
+    if(br.length){t+=`\n*Pain, chaque matin*\n`+br.map(b=>`• ${shortDate(b.date)} : ${b.qty}`).join('\n')+'\n';tot+=br.reduce((a,b)=>a+b.cost,0);}
+  }
+  const ex=(S.extra||[]).filter(x=>!isBought('x|'+x.id));
+  if(ex.length&&(which==='all'||+which===pl.trips.findIndex(tr=>tr.date>=iso(new Date()))))t+=`\n*Ajouts*\n`+ex.map(x=>'• '+x.t).join('\n')+'\n';
+  t+=`\nTotal estimé : ${money(tot)}`;
+  return t;
 }
 
 /* ---------- Séances ---------- */
@@ -921,10 +1110,13 @@ document.addEventListener('click',e=>{
     S.over[S.day+':'+s]=list[(i+1)%list.length].id;save();render();
   }
   else if(a==='reset-day'){SLOTS.forEach(s=>{delete S.over[S.day+':'+s];});save();render();}
-  else if(a==='sc'){S.sc=b.dataset.v;save();render();}
-  else if(a==='bought'){S.bought[b.dataset.id]=!S.bought[b.dataset.id];save();render();}
+  else if(a==='sc'){if(S.sc!==b.dataset.v){S.sc=b.dataset.v;S.shop=null;}save();render();}
+  else if(a==='bought'){const k=b.dataset.k;if(S.bought[k])delete S.bought[k];else S.bought[k]=1;save();render();}
+  else if(a==='have'){const id=b.dataset.id;if(S.have[id])delete S.have[id];else S.have[id]=1;save();render();}
+  else if(a==='freezer'){S.freezer=!S.freezer;save();render();toast(S.freezer?'Viande et poisson ajoutés à la grande course':'Viande et poisson achetés frais');}
+  else if(a==='xdel'){S.extra=(S.extra||[]).filter(x=>x.id!==b.dataset.id);delete S.bought['x|'+b.dataset.id];save();render();}
   else if(a==='copy'){
-    const t=shopText;
+    const t=shopCopy(b.dataset.trip||'all');
     if(navigator.clipboard&&navigator.clipboard.writeText){
       navigator.clipboard.writeText(t).then(()=>toast('Liste copiée'),()=>showCopy(t));
     }else showCopy(t);
@@ -948,6 +1140,13 @@ document.addEventListener('click',e=>{
   else if(a==='finish')finish();
   else if(a==='rest-add'){rleft+=15;showRest();}
   else if(a==='rest-x'){clearInterval(rt);rt=null;$('#rest').hidden=true;}
+});
+document.addEventListener('submit',e=>{
+  const f=e.target;if(f.dataset.form!=='xadd')return;
+  e.preventDefault();
+  const inp=$('#xin'),v=(inp.value||'').trim();if(!v)return;
+  S.extra=(S.extra||[]).concat({id:Date.now().toString(36),t:v.slice(0,60)});save();render();
+  const n=$('#xin');if(n)n.focus();
 });
 document.addEventListener('input',e=>{
   const t=e.target;

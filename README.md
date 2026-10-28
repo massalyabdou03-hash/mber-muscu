@@ -9,7 +9,11 @@ Application web de prise de masse pensée pour le Sénégal : repas avec des ali
 - **Aujourd'hui** : séance du jour, repas à cocher, objectif de calories et de protéines, suivi du poids.
 - **Repas** : plan du jour qui respecte le budget en FCFA saisi dans le profil. On peut changer un repas.
 - **Séances** : programme pour 3, 4 ou 5 jours par semaine, à la salle ou à la maison. Suivi des charges série par série, minuteur de repos, suggestion de progression.
-- **Courses** : liste sur 1 ou 7 jours, séparée entre marché et Auchan, à copier vers WhatsApp.
+- **Courses** : liste sur 1, 3 ou 7 jours qui reste en place jusqu'à la fin de la période.
+  - Quantités en vrais conditionnements (baguettes, boîtes, briques, paquets) et prix sur ce que tu paies vraiment.
+  - Sorties planifiées : une grande course pour le stock, puis le frais racheté tous les 2 ou 4 jours ; pain compté chaque matin.
+  - « Déjà à la maison ? » pour retirer ce qu'il te reste au placard, option congélateur, ajouts libres, copie WhatsApp de ce qui reste à acheter.
+  - Le marché d'abord, Auchan seulement si l'article n'y est pas ou s'il y est au moins 20 % moins cher.
 - **Profil** : calcul des besoins (formule de Mifflin-St Jeor, protéines à 1,8 g par kg).
 
 ## Design
