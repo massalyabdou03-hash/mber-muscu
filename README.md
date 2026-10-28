@@ -1,3 +1,5 @@
+<p align="center"><img src="logo.svg" width="96" alt="Logo Mbër Muscu"></p>
+
 # Mbër Muscu
 
 Application web de prise de masse pensée pour le Sénégal : repas avec des aliments du marché ou d'Auchan (prix en FCFA), liste de courses, et séances de musculation quotidiennes avec mannequins animés.
@@ -9,6 +11,12 @@ Application web de prise de masse pensée pour le Sénégal : repas avec des ali
 - **Séances** : programme pour 3, 4 ou 5 jours par semaine, à la salle ou à la maison. Suivi des charges série par série, minuteur de repos, suggestion de progression.
 - **Courses** : liste sur 1 ou 7 jours, séparée entre marché et Auchan, à copier vers WhatsApp.
 - **Profil** : calcul des besoins (formule de Mifflin-St Jeor, protéines à 1,8 g par kg).
+
+## Design
+
+- Identité noir et or : le logo est un « M » qui forme une barre de musculation, sur un badge or (`logo.svg`).
+- Thème clair et thème sombre, selon le réglage du téléphone.
+- Tableau de bord avec anneau de calories, macros en couleur, barre d'onglets flottante.
 
 ## Lancer
 
